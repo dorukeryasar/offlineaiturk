@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline AI - Mobil Uyumlu</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+        :root {
+            --bg-grad-1: #09090b; --bg-grad-2: #18181b;
+            --glass-bg: rgba(24, 24, 27, 0.85); --glass-border: rgba(255, 255, 255, 0.05);
+            --text-main: #e4e4e7;
+            --accent: #00f0ff; --accent-hover: #00c8d4;
+            --danger: #ef4444; --success: #10b981;
+            --user-msg: rgba(255, 255, 255, 0.03); --ai-msg: rgba(0, 240, 255, 0.03);
+            --sidebar-bg: #121214;
+            --logo-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-dasharray='50 20' opacity='0.8'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%2300f0ff' stroke-width='1.5' stroke-dasharray='10 5'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%2300f0ff' box-shadow='0 0 20px %2300f0ff'/%3E%3C/svg%3E");
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body { background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2)); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* SOHBET GEÇMİŞİ (SOL MENÜ) */
+        #sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 15px; z-index: 20; }
+        .new-chat-btn { background: transparent; color: var(--text-main); border: 1px solid var(--glass-border); padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .new-chat-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent); color: var(--accent); }
+        #chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        #chat-list::-webkit-scrollbar { width: 4px; }
+        #chat-list::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+        .chat-item { padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; border: 1px solid transparent; transition: 0.2s; }
+        .chat-item:hover { background: rgba(255,255,255,0.05); }
+        .chat-item.active { background: rgba(0, 240, 255, 0.1); border-color: rgba(0, 240, 255, 0.3); }
+        .chat-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .delete-chat { color: var(--danger); font-weight: bold; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+
+        /* ANA EKRAN */
+        #main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; width: 100%; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 30px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 10; }
+        .logo-title { display: flex; align-items: center; gap: 10px; }
+        .header-logo { width: 30px; height: 30px; background-image: var(--logo-url); background-size: cover; animation: spinSlow 20s linear infinite; }
+        @keyframes spinSlow { 100% { transform: rotate(360deg); } }
+        .header h1 { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
+        
+        .top-controls { display: flex; gap: 10px; align-items: center; }
+        .btn-outline { background: transparent; border: 1px solid; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        
+        #progressContainer { width: 90%; margin: 15px auto 5px auto; display: none; flex-direction: column; gap: 8px; }
+        progress { width: 100%; height: 3px; border-radius: 2px; }
+        progress::-webkit-progress-bar { background-color: #27272a; }
+        progress::-webkit-progress-value { background-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        #statusText { font-size: 0.75rem; color: #a1a1aa; text-align: center; }
+
+        .chat-container { flex: 1; overflow-y: auto; padding: 20px 5%; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+        .message-row { display: flex; width: 100%; }
+        .message-row.user-row { justify-content: flex-end; }
+        .message-row.ai-row { justify-content: flex-start; }
+        .message { max-width: 90%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; font-size: 0.9rem; white-space: pre-wrap; box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
+        .message.user { background-color: var(--user-msg); border: 1px solid var(--glass-border); border-bottom-right-radius: 2px; }
+        .message.ai { background-color: var(--ai-msg); border: 1px solid rgba(0, 240, 255, 0.1); border-bottom-left-radius: 2px; }
+
+        .input-container { padding: 15px 5%; background: var(--glass-bg); backdrop-filter: blur(20px); border-top: 1px solid var(--glass-border); }
+        .file-preview-area { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+        .file-chip { background: #27272a; color: #e4e4e7; font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; border: 1px solid #3f3f46; display: flex; align-items: center; gap: 5px; }
+        .file-chip .remove { color: #ef4444; cursor: pointer; font-weight: bold; }
+
+        .input-box { display: flex; width: 100%; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 4px 4px 4px 10px; border: 1px solid #3f3f46; align-items: center; }
+        .attach-btn { font-size: 1.2rem; color: #71717a; cursor: pointer; margin-right: 10px; }
+        #fileInput { display: none; }
+        textarea { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; resize: none; padding: 10px 0; outline: none; height: 40px; }
+        button.action-btn { background: var(--accent); color: #000; border: none; border-radius: 10px; padding: 0 15px; height: 35px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem;}
+        button.action-btn:disabled { background-color: #27272a; color: #52525b; }
+        #stopBtn { background-color: var(--danger); color: white; display: none; }
+
+        /* OTURUM AÇMA MODALI */
+        #auth-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .auth-box { background: #18181b; border: 1px solid var(--glass-border); padding: 25px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 15px; color: #a1a1aa; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+        .auth-box h2 { margin-bottom: 10px; color: var(--accent); font-size: 1.2rem; }
+        .auth-box p { font-size: 0.8rem; color: #a1a1aa; margin-bottom: 20px; }
+        .auth-btn { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.85rem;}
+        .btn-google { background: #fff; color: #000; }
+        .btn-phone { background: #10b981; color: #fff; }
+        .auth-divider { margin: 10px 0; color: #52525b; font-size: 0.75rem; display: flex; align-items: center; }
+        .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: #3f3f46; margin: 0 10px; }
+        .auth-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #3f3f46; background: #27272a; color: white; font-size: 0.85rem;}
+        .btn-email { background: var(--accent); color: #000; margin-top: 5px; }
+
+        /* MOBİL UYUM (TELEFON EKRANLARI İÇİN) */
+        @media (max-width: 768px) {
+            #sidebar { display: none; } /* Telefondan girince sol menü gizlenir, tam ekran sohbet açılır */
+            .header { padding: 12px 15px; }
+            .chat-container { padding: 15px 3%; }
+            .message { max-width: 95%; }
+            .input-container { padding: 10px 3%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <button class="new-chat-btn" onclick="createNewChat()">+ Yeni Sohbet</button>
+        <div id="chat-list"></div>
+    </div>
+
+    <div id="main-content">
+        <div class="header">
+            <div class="logo-title">
+                <div class="header-logo"></div>
+                <h1>Offline AI</h1>
+            </div>
+            <div class="top-controls">
+                <button id="loginBtnHeader" class="btn-outline" style="border-color: var(--success); color: var(--success);" onclick="openAuthModal()">Giriş Yap</button>
+                <button id="logoutBtn" class="btn-outline" style="display:none; border-color: var(--danger); color: var(--danger);" onclick="logout()">Çıkış</button>
+                <button id="latestBtn" class="btn-outline" style="border-color: var(--accent); color: var(--accent);">SON SÜRÜM</button>
+            </div>
+        </div>
+        
+        <div id="progressContainer" class="progress-container">
+            <progress id="progressBar" value="0" max="100"></progress>
+            <div id="statusText">Sistem hazırlanıyor...</div>
+        </div>
+
+        <div id="chatContainer" class="chat-container"></div>
+
+        <div class="input-container">
+            <div class="file-preview-area" id="filePreviewArea"></div>
+            <div class="input-box">
+                <label for="fileInput" class="attach-btn" title="Dosya Ekle">📎</label>
+                <input type="file" id="fileInput" multiple>
+                <textarea id="userInput" placeholder="Mesaj gönder..."></textarea>
+                <button id="sendBtn" class="action-btn" onclick="sendMessage()">Gönder</button>
+                <button id="stopBtn" class="action-btn" onclick="stopMessage()">Durdur</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal">
+        <div class="auth-box">
+            <div class="close-modal" onclick="closeAuthModal()">✖</div>
+            <h2>Giriş Yap / Kaydol</h2>
+            <p>Sistemi limitsiz kullanmak için oturum açın.</p>
+            
+            <button class="auth-btn btn-google" onclick="signInWithGoogle()">Google ile Giriş</button>
+            <div id="recaptcha-container"></div>
+            <button class="auth-btn btn-phone" onclick="signInWithPhone()">Telefon ile Giriş</button>
+            
+            <div class="auth-divider">veya E-Posta</div>
+            
+            <input type="email" id="emailInput" class="auth-input" placeholder="E-posta">
+            <input type="password" id="passwordInput" class="auth-input" placeholder="Şifre">
+            <button class="auth-btn btn-email" onclick="signInWithEmail()">Giriş Yap / Kayıt Ol</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOlttL7qinpo5GYpRcpKvc5Z8g9Ourqg0",
+            authDomain: "offlineaitturk.firebaseapp.com",
+            projectId: "offlineaitturk",
+            storageBucket: "offlineaitturk.firebasestorage.app",
+            messagingSenderId: "621177392296",
+            appId: "1:621177392296:web:34f4dadffe233d4c14869d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        let isUserLoggedIn = false;
+        let guestMessageCount = 0; 
+
+        window.openAuthModal = () => { document.getElementById('auth-modal').style.display = 'flex'; };
+        window.closeAuthModal = () => { document.getElementById('auth-modal').style.display = 'none'; };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                isUserLoggedIn = true;
+                window.closeAuthModal();
+                document.getElementById('loginBtnHeader').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+            } else {
+                isUserLoggedIn = false;
+                document.getElementById('loginBtnHeader').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+        });
+
+        window.signInWithGoogle = () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(err => alert("Google Giriş Hatası: " + err.message));
+        };
+        
+        window.signInWithEmail = () => {
+            const email = document.getElementById("emailInput").value;
+            const pass = document.getElementById("passwordInput").value;
+            if(!email || !pass) return alert("Lütfen e-posta ve şifre girin.");
+            
+            signInWithEmailAndPassword(auth, email, pass).catch(error => {
+                if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    createUserWithEmailAndPassword(auth, email, pass)
+                        .then(() => alert("Kayıt başarılı! Oturum açıldı."))
+                        .catch(err => alert("Kayıt Hatası: " + err.message));
+                } else {
+                    alert("Giriş Hatası: " + error.message);
+                }
+            });
+        };
+        
+        window.signInWithPhone = () => { alert("Telefon doğrulaması için Firebase Console'dan aktifleştirme yapmalısınız."); };
+        window.logout = () => { signOut(auth).then(() => { window.location.reload(); }); };
+
+        // --- YAPAY ZEKA VE SOHBET MANTIĞI ---
+        const STANDARD_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
+        const LATEST_MODEL = "Llama-3.1-8B-Instruct-q4f16_1-MLC"; 
+        
+        let currentModel = localStorage.getItem('offlineAI_selected_model') || STANDARD_MODEL;
+        let engine = null;
+        let forceStop = false; 
+        let attachedFilesContent = []; 
+
+        const systemPrompt = { role: "system", content: "Senin adın 'Offline AI'. Sen internetsiz çalışan, Türkçe odaklı bir yapay zeka asistanısın. Sana adın sorulduğunda adının 'Offline AI' olduğunu söyle. Kesinlikle başka bir ismin olduğunu iddia etme. Sadece Türkçe konuş." };
+
+        const progressContainer = document.getElementById("progressContainer");
+        const progressBar = document.getElementById("progressBar");
+        const statusText = document.getElementById("statusText");
+        const userInput = document.getElementById("userInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const chatContainer = document.getElementById("chatContainer");
+        const chatListDiv = document.getElementById("chat-list");
+
+        let chats = JSON.parse(localStorage.getItem('offlineAI_chats')) || [];
+        let currentChatId = null;
+
+        function saveChats() { localStorage.setItem('offlineAI_chats', JSON.stringify(chats)); renderChatList(); }
+
+        window.createNewChat = () => {
+            currentChatId = Date.now().toString();
+            chats.push({ id: currentChatId, title: "Yeni Sohbet", messages: [systemPrompt] });
+            saveChats(); loadChat(currentChatId);
+        };
+
+        function renderChatList() {
+            chatListDiv.innerHTML = "";
+            chats.forEach(chat => {
+                const div = document.createElement("div");
+                div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+                div.innerHTML = `<span class="chat-item-title" onclick="loadChat('${chat.id}')">${chat.title}</span><span class="delete-chat" onclick="deleteChat('${chat.id}')">X</span>`;
+                chatListDiv.appendChild(div);
+            });
+        }
+
+        window.loadChat = (id) => {
+            currentChatId = id; const chat = chats.find(c => c.id === id);
+            chatContainer.innerHTML = ""; renderChatList();
+            chat.messages.forEach(msg => { if(msg.role !== "system") { addMessageToUI(msg.content, msg.role === "user" ? "user" : "ai"); } });
+        };
+
+        window.deleteChat = (id) => {
+            chats = chats.filter(c => c.id !== id);
+            if(currentChatId === id) { chatContainer.innerHTML = ""; currentChatId = null; }
+            saveChats(); if(chats.length === 0) createNewChat();
+        };
+
+        if (chats.length === 0) createNewChat(); else loadChat(chats[chats.length - 1].id);
+
+        document.getElementById("fileInput").addEventListener('change', async (e) => {
+            const files = e.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const isText = ['txt', 'js', 'py', 'html', 'css', 'json', 'md'].includes(fileExt);
+
+                const chip = document.createElement('div');
+                chip.className = 'file-chip';
+                chip.innerHTML = `📄 ${file.name} <span class="remove" onclick="this.parentElement.remove()">x</span>`;
+                document.getElementById("filePreviewArea").appendChild(chip);
+
+                if (isText) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) { attachedFilesContent.push(`\n[${file.name} Dosyasının İçeriği:]\n${evt.target.result}\n`); };
+                    reader.readAsText(file);
+                } else {
+                    attachedFilesContent.push(`\n[Bilgi: Kullanıcı "${file.name}" dosyasını yükledi.]\n`);
+                }
+            }
+            e.target.value = ""; 
+        });
+
+        async function initializeAI() {
+            progressContainer.style.display = "flex";
+            if (!navigator.gpu) { 
+                statusText.innerHTML = "Bilgi: Cihazınız WebGPU'yu tam desteklemiyor olabilir, bu yüzden model açılmayabilir."; 
+                return; 
+            }
+
+            try {
+                const initProgressCallback = (report) => {
+                    statusText.innerText = report.text.includes("Loading") ? "Model yükleniyor..." : "İndiriliyor...";
+                    if (report.progress) progressBar.value = Math.round(report.progress * 100);
+                };
+
+                engine = await CreateMLCEngine(currentModel, { initProgressCallback });
+                progressContainer.style.display = "none";
+            } catch (error) { statusText.innerHTML = `Hata: ${error.message}`; }
+        }
+
+        document.getElementById('latestBtn').addEventListener('click', () => {
+            localStorage.setItem('offlineAI_selected_model', LATEST_MODEL); location.reload(); 
+        });
+
+        window.stopMessage = function() { forceStop = true; };
+
+        window.sendMessage = async function() {
+            if (!engine) { alert("Yapay zeka motoru henüz yüklenmedi veya cihazınızda desteklenmiyor."); return; }
+
+            let text = userInput.value.trim();
+            if (!text && attachedFilesContent.length === 0) return;
+
+            if (!isUserLoggedIn) {
+                if (guestMessageCount >= 1) { window.openAuthModal(); return; }
+                guestMessageCount++;
+            }
+
+            if (attachedFilesContent.length > 0) {
+                text += "\n" + attachedFilesContent.join("\n");
+                attachedFilesContent = []; document.getElementById("filePreviewArea").innerHTML = ""; 
+            }
+
+            addMessageToUI(userInput.value || "[Dosya Gönderildi]", "user");
+            userInput.value = ""; userInput.disabled = true;
+            sendBtn.style.display = "none"; stopBtn.style.display = "inline-block"; forceStop = false;
+
+            const chat = chats.find(c => c.id === currentChatId);
+            chat.messages.push({ role: "user", content: text });
+            
+            if(chat.messages.filter(m => m.role === "user").length === 1) { chat.title = text.substring(0, 20) + "..."; saveChats(); }
+
+            const aiMessageElement = addMessageToUI("...", "ai");
+
+            try {
+                const chunks = await engine.chat.completions.create({ messages: chat.messages, stream: true, max_tokens: 1000, temperature: 0.7 });
+                let fullReply = "";
+                for await (const chunk of chunks) {
+                    if (forceStop) { fullReply += "\n\n[Durduruldu]"; break; }
+                    fullReply += chunk.choices[0]?.delta?.content || "";
+                    aiMessageElement.innerText = fullReply; chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+                chat.messages.push({ role: "assistant", content: fullReply }); saveChats(); 
+            } catch (error) { aiMessageElement.innerText = "Hata: " + error.message; chat.messages.pop(); }
+
+            userInput.disabled = false; stopBtn.style.display = "none"; sendBtn.style.display = "inline-block"; userInput.focus();
+        };
+
+        userInput.addEventListener("keypress", function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+        function addMessageToUI(text, senderType) {
+            const wrapper = document.createElement("div"); wrapper.className = `message-row ${senderType === 'user' ? 'user-row' : 'ai-row'}`;
+            const msg = document.createElement("div"); msg.className = `message ${senderType}`; msg.innerText = text;
+            wrapper.appendChild(msg); chatContainer.appendChild(wrapper); chatContainer.scrollTop = chatContainer.scrollHeight; return msg;
+        }
+
+        window.addEventListener('load', initializeAI);
+    </script>
+</body>
+</html>
