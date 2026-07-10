@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline AI - Sadece Google Girişli</title>
+    <title>Offline AI</title>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
@@ -13,7 +13,7 @@
             --glass-bg: rgba(24, 24, 27, 0.85); --glass-border: rgba(255, 255, 255, 0.05);
             --text-main: #e4e4e7;
             --accent: #00f0ff; --accent-hover: #00c8d4;
-            --danger: #ef4444; --success: #10b981;
+            --danger: #ef4444;
             --user-msg: rgba(255, 255, 255, 0.03); --ai-msg: rgba(0, 240, 255, 0.03);
             --sidebar-bg: #121214;
             --logo-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-dasharray='50 20' opacity='0.8'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%2300f0ff' stroke-width='1.5' stroke-dasharray='10 5'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%2300f0ff' box-shadow='0 0 20px %2300f0ff'/%3E%3C/svg%3E");
@@ -23,7 +23,7 @@
 
         body { background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2)); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* SOHBET GEÇMİŞİ (SOL MENÜ) */
+        /* --- SOHBET GEÇMİŞİ (SOL MENÜ) --- */
         #sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 15px; z-index: 20; }
         .new-chat-btn { background: transparent; color: var(--text-main); border: 1px solid var(--glass-border); padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         .new-chat-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent); color: var(--accent); }
@@ -36,7 +36,7 @@
         .chat-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
         .delete-chat { color: var(--danger); font-weight: bold; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
 
-        /* ANA EKRAN */
+        /* --- ANA EKRAN --- */
         #main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; width: 100%; }
         .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 30px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 10; }
         .logo-title { display: flex; align-items: center; gap: 10px; }
@@ -45,7 +45,8 @@
         .header h1 { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
         
         .top-controls { display: flex; gap: 10px; align-items: center; }
-        .btn-outline { background: transparent; border: 1px solid; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .btn-outline:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
         
         #progressContainer { width: 90%; margin: 15px auto 5px auto; display: none; flex-direction: column; gap: 8px; }
         progress { width: 100%; height: 3px; border-radius: 2px; }
@@ -54,6 +55,8 @@
         #statusText { font-size: 0.75rem; color: #a1a1aa; text-align: center; }
 
         .chat-container { flex: 1; overflow-y: auto; padding: 20px 5%; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
         .message-row { display: flex; width: 100%; }
         .message-row.user-row { justify-content: flex-end; }
         .message-row.ai-row { justify-content: flex-start; }
@@ -72,16 +75,6 @@
         textarea { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; resize: none; padding: 10px 0; outline: none; height: 40px; }
         button.action-btn { background: var(--accent); color: #000; border: none; border-radius: 10px; padding: 0 15px; height: 35px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem;}
         #stopBtn { background-color: var(--danger); color: white; display: none; }
-
-        /* SADELEŞTİRİLMİŞ OTURUM AÇMA MODALI */
-        #auth-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .auth-box { background: #18181b; border: 1px solid var(--glass-border); padding: 35px 25px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .close-modal { position: absolute; top: 15px; right: 15px; color: #a1a1aa; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
-        .auth-box h2 { margin-bottom: 12px; color: var(--accent); font-size: 1.3rem; }
-        .auth-box p { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 25px; line-height: 1.4; }
-        .auth-btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; transition: 0.2s; }
-        .btn-google { background: #fff; color: #000; }
-        .btn-google:hover { background: #eee; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
 
         @media (max-width: 768px) {
             #sidebar { display: none; }
@@ -106,9 +99,7 @@
                 <h1>Offline AI</h1>
             </div>
             <div class="top-controls">
-                <button id="loginBtnHeader" class="btn-outline" style="border-color: var(--success); color: var(--success);" onclick="openAuthModal()">Giriş Yap</button>
-                <button id="logoutBtn" class="btn-outline" style="display:none; border-color: var(--danger); color: var(--danger);" onclick="logout()">Çıkış</button>
-                <button id="latestBtn" class="btn-outline" style="border-color: var(--accent); color: var(--accent);">SON SÜRÜM</button>
+                <button id="latestBtn" class="btn-outline">SON SÜRÜM</button>
             </div>
         </div>
         
@@ -131,64 +122,9 @@
         </div>
     </div>
 
-    <div id="auth-modal">
-        <div class="auth-box">
-            <div class="close-modal" onclick="closeAuthModal()">✖</div>
-            <h2>Giriş Yap / Kaydol</h2>
-            <p>Sistemi limitsiz kullanmak ve tüm özelliklere erişmek için Google hesabınızla oturum açın.</p>
-            
-            <button class="auth-btn btn-google" onclick="signInWithGoogle()">
-                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d='M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84c-.21 1.12-.84 2.07-1.8 2.71v2.24h2.92c1.71-1.57 2.68-3.88 2.68-6.58z' fill='#4285F4'/><path d='M9 18c2.43 0 4.47-.8 5.96-2.2l-2.92-2.24c-.8.54-1.84.87-3.04.87-2.34 0-4.33-1.57-5.03-3.68H.12v2.3C1.6 16.02 5.03 18 9 18z' fill='#34A853'/><path d='M3.97 10.75c-.18-.54-.28-1.1-.28-1.75s.1-1.21.28-1.75V4.95H.12C-.48 6.16-.83 7.54-.83 9s.35 2.84.95 4.05l3.85-2.3z' fill='#FBBC05'/><path d='M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4C13.46.98 11.42 0 9 0 5.03 0 1.6 1.98.12 4.95l3.85 2.3c.7-2.1 2.69-3.67 5.03-3.67z' fill='#EA4335'/></svg>
-                Google ile Giriş Yap
-            </button>
-        </div>
-    </div>
-
     <script type="module">
         import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
-        
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCOlttL7qinpo5GYpRcpKvc5Z8g9Ourqg0",
-            authDomain: "offlineaitturk.firebaseapp.com",
-            projectId: "offlineaitturk",
-            storageBucket: "offlineaitturk.firebasestorage.app",
-            messagingSenderId: "621177392296",
-            appId: "1:621177392296:web:34f4dadffe233d4c14869d"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        let isUserLoggedIn = false;
-        let guestMessageCount = 0; 
-
-        window.openAuthModal = () => { document.getElementById('auth-modal').style.display = 'flex'; };
-        window.closeAuthModal = () => { document.getElementById('auth-modal').style.display = 'none'; };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                isUserLoggedIn = true;
-                window.closeAuthModal();
-                document.getElementById('loginBtnHeader').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-            } else {
-                isUserLoggedIn = false;
-                document.getElementById('loginBtnHeader').style.display = 'inline-block';
-                document.getElementById('logoutBtn').style.display = 'none';
-            }
-        });
-
-        window.signInWithGoogle = () => {
-            const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).catch(err => alert("Google Giriş Hatası: " + err.message));
-        };
-        
-        window.logout = () => { signOut(auth).then(() => { window.location.reload(); }); };
-
-        // --- YAPAY ZEKA VE SOHBET MANTIĞI ---
         const STANDARD_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
         const LATEST_MODEL = "Llama-3.1-8B-Instruct-q4f16_1-MLC"; 
         
@@ -292,11 +228,6 @@
 
             let text = userInput.value.trim();
             if (!text && attachedFilesContent.length === 0) return;
-
-            if (!isUserLoggedIn) {
-                if (guestMessageCount >= 1) { window.openAuthModal(); return; }
-                guestMessageCount++;
-            }
 
             if (attachedFilesContent.length > 0) {
                 text += "\n" + attachedFilesContent.join("\n");
