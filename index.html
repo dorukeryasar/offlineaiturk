@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline AI - Mobil Uyumlu</title>
+    <title>Offline AI - Sadece Google Girişli</title>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
@@ -54,8 +54,6 @@
         #statusText { font-size: 0.75rem; color: #a1a1aa; text-align: center; }
 
         .chat-container { flex: 1; overflow-y: auto; padding: 20px 5%; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
-        .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
         .message-row { display: flex; width: 100%; }
         .message-row.user-row { justify-content: flex-end; }
         .message-row.ai-row { justify-content: flex-start; }
@@ -73,26 +71,20 @@
         #fileInput { display: none; }
         textarea { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; resize: none; padding: 10px 0; outline: none; height: 40px; }
         button.action-btn { background: var(--accent); color: #000; border: none; border-radius: 10px; padding: 0 15px; height: 35px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem;}
-        button.action-btn:disabled { background-color: #27272a; color: #52525b; }
         #stopBtn { background-color: var(--danger); color: white; display: none; }
 
-        /* OTURUM AÇMA MODALI */
+        /* SADELEŞTİRİLMİŞ OTURUM AÇMA MODALI */
         #auth-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .auth-box { background: #18181b; border: 1px solid var(--glass-border); padding: 25px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; position: relative; }
+        .auth-box { background: #18181b; border: 1px solid var(--glass-border); padding: 35px 25px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .close-modal { position: absolute; top: 15px; right: 15px; color: #a1a1aa; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
-        .auth-box h2 { margin-bottom: 10px; color: var(--accent); font-size: 1.2rem; }
-        .auth-box p { font-size: 0.8rem; color: #a1a1aa; margin-bottom: 20px; }
-        .auth-btn { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.85rem;}
+        .auth-box h2 { margin-bottom: 12px; color: var(--accent); font-size: 1.3rem; }
+        .auth-box p { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 25px; line-height: 1.4; }
+        .auth-btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; transition: 0.2s; }
         .btn-google { background: #fff; color: #000; }
-        .btn-phone { background: #10b981; color: #fff; }
-        .auth-divider { margin: 10px 0; color: #52525b; font-size: 0.75rem; display: flex; align-items: center; }
-        .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: #3f3f46; margin: 0 10px; }
-        .auth-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #3f3f46; background: #27272a; color: white; font-size: 0.85rem;}
-        .btn-email { background: var(--accent); color: #000; margin-top: 5px; }
+        .btn-google:hover { background: #eee; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
 
-        /* MOBİL UYUM (TELEFON EKRANLARI İÇİN) */
         @media (max-width: 768px) {
-            #sidebar { display: none; } /* Telefondan girince sol menü gizlenir, tam ekran sohbet açılır */
+            #sidebar { display: none; }
             .header { padding: 12px 15px; }
             .chat-container { padding: 15px 3%; }
             .message { max-width: 95%; }
@@ -143,17 +135,12 @@
         <div class="auth-box">
             <div class="close-modal" onclick="closeAuthModal()">✖</div>
             <h2>Giriş Yap / Kaydol</h2>
-            <p>Sistemi limitsiz kullanmak için oturum açın.</p>
+            <p>Sistemi limitsiz kullanmak ve tüm özelliklere erişmek için Google hesabınızla oturum açın.</p>
             
-            <button class="auth-btn btn-google" onclick="signInWithGoogle()">Google ile Giriş</button>
-            <div id="recaptcha-container"></div>
-            <button class="auth-btn btn-phone" onclick="signInWithPhone()">Telefon ile Giriş</button>
-            
-            <div class="auth-divider">veya E-Posta</div>
-            
-            <input type="email" id="emailInput" class="auth-input" placeholder="E-posta">
-            <input type="password" id="passwordInput" class="auth-input" placeholder="Şifre">
-            <button class="auth-btn btn-email" onclick="signInWithEmail()">Giriş Yap / Kayıt Ol</button>
+            <button class="auth-btn btn-google" onclick="signInWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d='M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84c-.21 1.12-.84 2.07-1.8 2.71v2.24h2.92c1.71-1.57 2.68-3.88 2.68-6.58z' fill='#4285F4'/><path d='M9 18c2.43 0 4.47-.8 5.96-2.2l-2.92-2.24c-.8.54-1.84.87-3.04.87-2.34 0-4.33-1.57-5.03-3.68H.12v2.3C1.6 16.02 5.03 18 9 18z' fill='#34A853'/><path d='M3.97 10.75c-.18-.54-.28-1.1-.28-1.75s.1-1.21.28-1.75V4.95H.12C-.48 6.16-.83 7.54-.83 9s.35 2.84.95 4.05l3.85-2.3z' fill='#FBBC05'/><path d='M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4C13.46.98 11.42 0 9 0 5.03 0 1.6 1.98.12 4.95l3.85 2.3c.7-2.1 2.69-3.67 5.03-3.67z' fill='#EA4335'/></svg>
+                Google ile Giriş Yap
+            </button>
         </div>
     </div>
 
@@ -161,7 +148,7 @@
         import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCOlttL7qinpo5GYpRcpKvc5Z8g9Ourqg0",
@@ -199,23 +186,6 @@
             signInWithPopup(auth, provider).catch(err => alert("Google Giriş Hatası: " + err.message));
         };
         
-        window.signInWithEmail = () => {
-            const email = document.getElementById("emailInput").value;
-            const pass = document.getElementById("passwordInput").value;
-            if(!email || !pass) return alert("Lütfen e-posta ve şifre girin.");
-            
-            signInWithEmailAndPassword(auth, email, pass).catch(error => {
-                if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                    createUserWithEmailAndPassword(auth, email, pass)
-                        .then(() => alert("Kayıt başarılı! Oturum açıldı."))
-                        .catch(err => alert("Kayıt Hatası: " + err.message));
-                } else {
-                    alert("Giriş Hatası: " + error.message);
-                }
-            });
-        };
-        
-        window.signInWithPhone = () => { alert("Telefon doğrulaması için Firebase Console'dan aktifleştirme yapmalısınız."); };
         window.logout = () => { signOut(auth).then(() => { window.location.reload(); }); };
 
         // --- YAPAY ZEKA VE SOHBET MANTIĞI ---
@@ -298,10 +268,7 @@
 
         async function initializeAI() {
             progressContainer.style.display = "flex";
-            if (!navigator.gpu) { 
-                statusText.innerHTML = "Bilgi: Cihazınız WebGPU'yu tam desteklemiyor olabilir, bu yüzden model açılmayabilir."; 
-                return; 
-            }
+            if (!navigator.gpu) { statusText.innerHTML = "Bilgi: Cihazınız WebGPU'yu desteklemiyor olabilir."; return; }
 
             try {
                 const initProgressCallback = (report) => {
@@ -321,7 +288,7 @@
         window.stopMessage = function() { forceStop = true; };
 
         window.sendMessage = async function() {
-            if (!engine) { alert("Yapay zeka motoru henüz yüklenmedi veya cihazınızda desteklenmiyor."); return; }
+            if (!engine) { alert("Yapay zeka motoru henüz yüklenmedi."); return; }
 
             let text = userInput.value.trim();
             if (!text && attachedFilesContent.length === 0) return;
